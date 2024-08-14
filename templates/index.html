@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection</title>
+    <style>
+        .container {
+            text-align: center;
+        }
+        .video-feed {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Face Detection</h1>
+        <div class="video-feed">
+            <img id="video" src="{{ url_for('video_feed') }}">
+        </div>
+        <button id="capture" disabled>Capture Photo</button>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('capture');
+        
+        video.addEventListener('load', () => {
+            captureButton.disabled = false;
+        });
+
+        captureButton.addEventListener('click', () => {
+            fetch('/capture_photo', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                });
+        });
+    </script>
+</body>
+</html>
