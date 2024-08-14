@@ -1,5 +1,7 @@
-from flask import Flask, jsonify, send_file, make_response
+from flask import Flask, jsonify, make_response
 import cv2
+import base64
+import numpy as np
 
 app = Flask(__name__)
 
@@ -12,7 +14,7 @@ def detect_bounding_box(frame):
     faces = face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
     return faces
 
-@app.route('/capture_photo', methods=['POST'])
+@app.route('/', methods=['GET'])
 def capture_photo():
     success, frame = video_capture.read()
     if success:
@@ -28,15 +30,19 @@ def capture_photo():
             face_region = frame[y_start:y_end, x_start:x_end]
             passport_size_face = cv2.resize(face_region, (200, 200))
             
-            # Save the image to a buffer instead of file
+            # Encode the image to a buffer
             _, img_encoded = cv2.imencode('.jpg', passport_size_face)
             img_bytes = img_encoded.tobytes()
             
-            # Create a response with the image and status code 200
-            response = make_response(img_bytes)
-            response.headers.set('Content-Type', 'image/jpeg')
-            response.headers.set('Content-Disposition', 'attachment', filename='passport_photo.jpg')
-            return response
+            # Convert the bytes to a Base64 string
+            img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+            
+            # Create a JSON response with the Base64 string
+            response = {
+                'status': 'success',
+                'image': img_base64
+            }
+            return jsonify(response), 200
         
         elif len(faces) > 1:
             return jsonify(message="Multiple faces detected. Photo not captured."), 400
@@ -45,4 +51,5 @@ def capture_photo():
     else:
         return jsonify(message="Failed to capture photo"), 500
 
-
+if __name__ == '__main__':
+    app.run()
