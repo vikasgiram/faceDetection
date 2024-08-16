@@ -15,49 +15,46 @@ def detect_bounding_box(frame):
 
 @app.route('/')
 def index():
-    return "Welcome, please make post request"
+    return "Welcome to the Face Detection API Please make post request with base64 image string"
 
 @app.route('/', methods=['POST'])
 def process_image():
-    # Check if Base64 image is provided in the request
-    data = request.json
-    if 'image' not in data:
-        return jsonify(message="No image data provided"), 400
+    client_ip = request.remote_addr  # Get the client's IP address
+    data = request.get_json()
 
-    img_base64 = data['image']
+    # Print the access to the console
+    print(f"API accessed by {client_ip}")
     
+    if 'image' not in data:
+        print(f"Request from {client_ip} did not include an image.")
+        return jsonify(message="Image data not provided"), 400
+
     try:
-        # Decode the Base64 string
-        img_bytes = base64.b64decode(img_base64)
-        
-        # Convert the byte stream to a NumPy array
-        img_array = np.frombuffer(img_bytes, np.uint8)
-        
-        # Decode the NumPy array to an image
-        image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-        
-        # Detect faces in the image
-        faces = detect_bounding_box(image)
-        
+        # Decode the base64 image
+        img_data = base64.b64decode(data['image'])
+        np_arr = np.frombuffer(img_data, np.uint8)
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        faces = detect_bounding_box(frame)
         if len(faces) == 1:
             (x, y, w, h) = faces[0]
             padding = int(0.5 * h)
             x_start = max(x - padding, 0)
             y_start = max(y - padding, 0)
-            x_end = min(x + w + padding, image.shape[1])
-            y_end = min(y + h + padding, image.shape[0])
+            x_end = min(x + w + padding, frame.shape[1])
+            y_end = min(y + h + padding, frame.shape[0])
             
-            face_region = image[y_start:y_end, x_start:x_end]
+            face_region = frame[y_start:y_end, x_start:x_end]
             passport_size_face = cv2.resize(face_region, (200, 200))
-            
-            # Encode the image to a buffer
+
+            # Encode the image to Base64
             _, img_encoded = cv2.imencode('.jpg', passport_size_face)
             img_bytes = img_encoded.tobytes()
-            
-            # Convert the bytes to a Base64 string
             img_base64 = base64.b64encode(img_bytes).decode('utf-8')
             
-            # Create a JSON response with the Base64 string
+            # Print the successful result to the console
+            print(f"Face detected and processed for {client_ip}.")
+            
             response = {
                 'status': 'success',
                 'image': img_base64
@@ -65,12 +62,15 @@ def process_image():
             return jsonify(response), 200
         
         elif len(faces) > 1:
+            print(f"Multiple faces detected for {client_ip}.")
             return jsonify(message="Multiple faces detected. Photo not processed."), 400
         else:
+            print(f"No face detected for {client_ip}.")
             return jsonify(message="No face detected. Photo not processed."), 400
-    
+
     except Exception as e:
-        return jsonify(message=f"Error processing image: {str(e)}"), 500
+        print(f"Error processing image from {client_ip}: {str(e)}")
+        return jsonify(message="Error processing image"), 500
 
 if __name__ == '__main__':
     app.run()
