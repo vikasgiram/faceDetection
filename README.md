@@ -128,7 +128,7 @@ You can integrate the API into an Angular application using the `HttpClient` mod
 import { HttpClient } from '@angular/common/http';
 
 export class FaceDetectionService {
-  private apiUrl = 'https://facedetection-hnz5.onrender.com/process_image';
+  private apiUrl = 'https://facedetection-hnz5.onrender.com/';
 
   constructor(private http: HttpClient) {}
 
