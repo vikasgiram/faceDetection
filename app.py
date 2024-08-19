@@ -2,8 +2,10 @@ from flask import Flask, jsonify, request
 import base64
 import cv2
 import numpy as np
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Initialize the Haar Cascade face detector
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
