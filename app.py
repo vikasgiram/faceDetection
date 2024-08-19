@@ -21,14 +21,14 @@ def index():
 
 @app.route('/', methods=['POST'])
 def process_image():
-    client_ip = request.remote_addr  # Get the client's IP address
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)  # Get the client's IP address
     data = request.get_json()
 
     # Print the access to the console
-    print(f"API accessed by {client_ip}")
+    print(f"--------------------API accessed by {client_ip}--------------------")
     
     if 'image' not in data:
-        print(f"Request from {client_ip} did not include an image.")
+        print(f"--------------------Request from {client_ip} did not include an image.--------------------")
         return jsonify(message="Image data not provided"), 400
 
     try:
@@ -55,7 +55,7 @@ def process_image():
             img_base64 = base64.b64encode(img_bytes).decode('utf-8')
             
             # Print the successful result to the console
-            print(f"Face detected and processed for {client_ip}.")
+            print(f"--------------------Face detected and processed sucess for {client_ip}.--------------------")
             
             response = {
                 'status': 'success',
